@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Florida Bureaucratic Friction Index | Adam Smith Center · FIU</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f4f6f9;
+    --border: #dce3ed;
+    --text: #081E3F;
+    --muted: #5a6e8a;
+    --accent: #B6862C;
+    --accent2: #2a7a3b;
+    --red: #c0392b;
+    --blue: #2563a8;
+    --purple: #2563a8;
+    --card-bg: #f8fafc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; min-height: 100vh; }
+  header { background: #081E3F; border-bottom: 2px solid #B6862C; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); display: flex; align-items: center; gap: 18px; }
+  .logo strong { color: #ffffff; font-size: 13px; display: block; letter-spacing: .05em; }
+  .logo-text { display: flex; flex-direction: column; justify-content: center; }
+  .header-badges { display: flex; gap: 6px; }
+  .badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: .08em; }
+  .badge-orange { background: #081E3F; color: #ffffff; }
+  .badge-green { background: #e8f5eb; color: #2a7a3b; border: 1px solid #2a7a3b; }
+  .layout { display: grid; grid-template-columns: 290px 1fr; min-height: calc(100vh - 53px); }
+  .sidebar { background: #081E3F; border-right: 2px solid #B6862C; display: flex; flex-direction: column; overflow: hidden; }
+  .sidebar-head { padding: 14px; border-bottom: 1px solid #1a3a6e; flex-shrink: 0; }
+  .sidebar-head h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: #8ba3c7; margin-bottom: 8px; }
+  .search-box { width: 100%; background: #0d2a55; border: 1px solid #1a3a6e; border-radius: 6px; padding: 7px 10px; color: #f0f4f8; font-size: 13px; outline: none; }
+  .search-box:focus { border-color: #B6862C; }
+  .sort-row { display: flex; gap: 5px; margin-top: 8px; }
+  .sort-btn { flex: 1; background: #0d2a55; border: 1px solid #1a3a6e; border-radius: 4px; color: #8ba3c7; font-size: 10px; padding: 5px 3px; cursor: pointer; text-align: center; }
+  .sort-btn.active { border-color: #B6862C; color: #B6862C; background: #0a1e3a; }
+  .county-list { flex: 1; overflow-y: auto; }
+  .county-item { padding: 10px 14px; border-bottom: 1px solid #1a3a6e; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background .12s; }
+  .county-item:hover { background: #0d2a55; }
+  .county-item.active { background: #0a1e3a; border-left: 3px solid #B6862C; padding-left: 11px; }
+  .county-name { font-weight: 500; font-size: 13px; color: #f0f4f8; }
+  .county-meta { font-size: 11px; color: #8ba3c7; margin-top: 2px; }
+  .friction-pill { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; flex-shrink: 0; }
+  .fr-low { background: #e8f5eb; color: #2a7a3b; }
+  .fr-mid { background: #fdf3e3; color: #8a5e10; }
+  .fr-high { background: #fdecea; color: #c0392b; }
+  .main { display: flex; flex-direction: column; overflow-x: hidden; }
+  .main-top { padding: 22px 26px 0; }
+  .county-title { font-size: 24px; font-weight: 700; }
+  .county-subtitle { color: var(--muted); font-size: 13px; margin-top: 3px; }
+  .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 16px 26px 0; }
+  .stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+  .stat-tag { font-size: 9px; background: #fdf3e3; color: #8a5e10; padding: 1px 5px; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
+  .stat-tag-green { background: #e8f5eb; color: #2a7a3b; }
+  .stat-value { font-size: 20px; font-weight: 700; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 26px 0; }
+  .chart-section { padding: 14px 26px 0; }
+  .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .src-badge { font-size: 9px; background: var(--surface); border: 1px solid var(--border); padding: 1px 6px; border-radius: 3px; color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
+  canvas { width: 100%; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; display: block; }
+  #chart-canvas { height: 200px; }
+  .detail-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .detail-card h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .drow { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .drow:last-child { border-bottom: none; }
+  .drow span:last-child { font-weight: 600; }
+  .bar-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; }
+  .bar-label { width: 100px; color: var(--muted); flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+  .bar-track { flex: 1; background: var(--border); border-radius: 3px; height: 7px; }
+  .bar-fill { height: 7px; border-radius: 3px; transition: width .4s; }
+  .bar-num { width: 38px; text-align: right; font-weight: 600; font-size: 11px; }
+  .context-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px 26px 0; }
+  .context-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .context-card h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .big-num { font-size: 28px; font-weight: 700; }
+  .big-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .wage-bar-track { width: 100%; background: var(--border); border-radius: 4px; height: 6px; margin-top: 10px; }
+  .wage-bar-fill { height: 6px; border-radius: 4px; background: #B6862C; }
+  .wage-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .quadrant-label { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .quadrant-label strong { color: var(--text); }
+  .ai-section { margin: 14px 26px 0; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .ai-header { background: var(--surface); padding: 9px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+  .ai-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); }
+  .ai-messages { height: 150px; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .msg { max-width: 88%; font-size: 13px; line-height: 1.5; padding: 7px 11px; border-radius: 8px; }
+  .msg.user { align-self: flex-end; background: #081E3F; color: #ffffff; border: 1px solid #081E3F; }
+  .msg.ai { align-self: flex-start; background: #f0f4f8; border: 1px solid var(--border); color: var(--text); }
+  .msg.loading { color: var(--muted); font-style: italic; }
+  .ai-input-row { display: flex; border-top: 1px solid var(--border); }
+  .ai-input { flex: 1; background: transparent; border: none; padding: 10px 13px; color: var(--text); font-size: 13px; outline: none; }
+  .ai-send { background: #081E3F; border: none; padding: 0 16px; color: #ffffff; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .ai-send:hover { background: #0d2a55; }
+  .ai-suggestions { display: flex; gap: 5px; padding: 7px 14px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .ai-chip { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 3px 9px; font-size: 11px; color: var(--muted); cursor: pointer; }
+  .ai-chip:hover { border-color: #081E3F; color: #081E3F; }
+  footer { padding: 14px 26px; color: var(--muted); font-size: 10px; border-top: 1px solid var(--border); margin-top: 14px; line-height: 1.6; }
+
+  /* API Key Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(8,30,63,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+  .modal-box { background: #ffffff; border: 2px solid #B6862C; border-radius: 12px; padding: 32px; max-width: 460px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .modal-logo { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #dce3ed; }
+  .modal-title { font-size: 18px; font-weight: 700; color: #081E3F; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: #5a6e8a; line-height: 1.5; margin-bottom: 20px; }
+  .modal-label { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: #5a6e8a; margin-bottom: 6px; font-weight: 600; }
+  .modal-input { width: 100%; border: 1px solid #dce3ed; border-radius: 6px; padding: 10px 12px; font-size: 13px; color: #081E3F; outline: none; font-family: monospace; }
+  .modal-input:focus { border-color: #081E3F; }
+  .modal-btn { width: 100%; background: #081E3F; color: #ffffff; border: none; border-radius: 6px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 14px; letter-spacing: .03em; }
+  .modal-btn:hover { background: #0d2a55; }
+  .modal-note { font-size: 11px; color: #8ba3c7; margin-top: 12px; text-align: center; line-height: 1.5; }
+  .modal-note a { color: #B6862C; }
+  .modal-skip { background: none; border: none; color: #8ba3c7; font-size: 12px; cursor: pointer; margin-top: 8px; width: 100%; text-align: center; text-decoration: underline; }
+  .modal-skip:hover { color: #5a6e8a; }
+  /* API key bar at bottom of AI section */
+  .api-bar { display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-top: 1px solid #dce3ed; background: #f8fafc; }
+  .api-bar-label { font-size: 11px; color: #8ba3c7; flex-shrink: 0; }
+  .api-bar-key { font-size: 11px; color: #2a7a3b; font-family: monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .api-bar-btn { font-size: 11px; color: #B6862C; background: none; border: none; cursor: pointer; text-decoration: underline; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="modal-overlay" id="api-modal">
+  <div class="modal-box">
+    <div class="modal-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" height="32">
+        <text x="0" y="36" font-family="Georgia,serif" font-size="42" font-weight="700" fill="#081E3F" stroke="#B6862C" stroke-width="1.2" letter-spacing="-1">FIU</text>
+        <line x1="108" y1="3" x2="108" y2="43" stroke="#B6862C" stroke-width="2"/>
+        <text x="116" y="15" font-family="Georgia,serif" font-size="9.5" font-weight="700" fill="#081E3F" letter-spacing="1">FLORIDA</text>
+        <text x="116" y="28" font-family="Georgia,serif" font-size="9.5" font-weight="700" fill="#081E3F" letter-spacing="1">INTERNATIONAL</text>
+        <text x="116" y="41" font-family="Georgia,serif" font-size="9.5" font-weight="700" fill="#081E3F" letter-spacing="1">UNIVERSITY</text>
+      </svg>
+    </div>
+    <div class="modal-title">Florida Bureaucratic Friction Index</div>
+    <div class="modal-sub">Enter your Anthropic API key to enable the AI Policy Analyst. Your key is stored only in this browser session and never sent anywhere except directly to Anthropic's API.</div>
+    <div class="modal-label">Anthropic API Key</div>
+    <input class="modal-input" id="modal-key-input" type="password" placeholder="sk-ant-..." onkeydown="if(event.key==='Enter')saveKey()">
+    <button class="modal-btn" onclick="saveKey()">Launch Tool</button>
+    <p class="modal-note">Don't have a key? Get one at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+    <button class="modal-skip" onclick="skipKey()">Skip — browse data without AI analyst</button>
+  </div>
+</div>
+
+<header>
+  <div class="logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" height="38" style="display:block;flex-shrink:0">
+  <!-- FIU letters - navy fill, gold stroke -->
+  <text x="0" y="38" font-family="Georgia,serif" font-size="44" font-weight="700"
+        fill="#081E3F" stroke="#B6862C" stroke-width="1.2" letter-spacing="-1">FIU</text>
+  <!-- Gold vertical divider -->
+  <line x1="108" y1="3" x2="108" y2="45" stroke="#B6862C" stroke-width="2"/>
+  <!-- University name - 3 lines -->
+  <text x="116" y="16" font-family="Georgia,serif" font-size="10" font-weight="700" fill="#ffffff" letter-spacing="1">FLORIDA</text>
+  <text x="116" y="30" font-family="Georgia,serif" font-size="10" font-weight="700" fill="#ffffff" letter-spacing="1">INTERNATIONAL</text>
+  <text x="116" y="44" font-family="Georgia,serif" font-size="10" font-weight="700" fill="#ffffff" letter-spacing="1">UNIVERSITY</text>
+</svg>
+    <div class="logo-text">
+      <strong>Florida Bureaucratic Friction Index</strong>
+      <span style="color:#8ba3c7;">Adam Smith Center for Economic Freedom</span>
+      <span style="font-size:10px;color:#8ba3c7;margin-top:2px;">Veronika Cieslak, Ph.D. · Post-Doctoral Research Fellow</span>
+    </div>
+  </div>
+  <div class="header-badges">
+    <span class="badge badge-green">✓ Verified Data</span>
+    <span class="badge badge-orange">Pilot 2025</span>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-head">
+      <h2>20 Counties</h2>
+      <input class="search-box" id="search" placeholder="Search county…" oninput="filterList()">
+      <div class="sort-row">
+        <button class="sort-btn active" id="sort-friction" onclick="sortBy('friction')">Friction ↓</button>
+        <button class="sort-btn" id="sort-name" onclick="sortBy('name')">A–Z</button>
+        <button class="sort-btn" id="sort-growth" onclick="sortBy('growth')">Growth ↓</button>
+        <button class="sort-btn" id="sort-wage" onclick="sortBy('wage')">Wage ↓</button>
+      </div>
+    </div>
+    <div class="county-list" id="county-list"></div>
+  </div>
+
+  <div class="main">
+    <div class="main-top">
+      <div class="county-title" id="ctitle"></div>
+      <div class="county-subtitle" id="csubtitle"></div>
+    </div>
+
+    <div class="stats-row" id="stats-row"></div>
+
+    <div class="chart-section">
+      <div class="section-label">Business Applications 2005–2024 <span class="src-badge">Census BFS · verified</span></div>
+      <canvas id="chart-canvas"></canvas>
+    </div>
+
+    <div class="two-col">
+      <div class="detail-card">
+        <h3>Regulatory Details <span class="src-badge" style="color:var(--accent)">estimated</span></h3>
+        <div id="reg-details"></div>
+      </div>
+      <div class="detail-card">
+        <h3>Top 10 by Friction Score <span class="src-badge" style="color:var(--accent)">estimated</span></h3>
+        <div id="friction-bars"></div>
+      </div>
+    </div>
+
+    <!-- Context panel: wages, millage, surtax -->
+    <div class="context-grid">
+      <div class="context-card">
+        <h3>Avg Weekly Wage <span class="src-badge" style="color:var(--purple)">BLS QCEW Q3 2025</span></h3>
+        <div class="big-num" id="wage-num" style="color:var(--purple)"></div>
+        <div class="big-sub" id="wage-sub"></div>
+        <div class="wage-bar-track"><div class="wage-bar-fill" id="wage-bar"></div></div>
+        <div class="wage-labels"><span>$1,079 (Lake)</span><span>$1,710 (PB)</span></div>
+        <div class="quadrant-label" id="quadrant-label"></div>
+      </div>
+      <div class="context-card">
+        <h3>Tax Burden <span class="src-badge" style="color:var(--accent2)">FL DOR · FL EDR · verified</span></h3>
+        <div id="tax-details"></div>
+      </div>
+      <div class="context-card">
+        <h3>County Context</h3>
+        <div id="county-context"></div>
+      </div>
+    </div>
+
+    <div class="ai-section">
+      <div class="ai-header"><span class="ai-dot"></span>AI Policy Analyst — powered by Claude</div>
+      <div class="ai-messages" id="ai-messages">
+        <div class="msg ai">Ask me anything about the Florida Bureaucratic Friction Index — county comparisons, tax burdens, wage context, or policy implications.</div>
+      </div>
+      <div class="ai-suggestions" id="ai-chips"></div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="ai-input" placeholder="Ask a policy question…" onkeydown="if(event.key==='Enter')sendMessage()">
+        <button class="ai-send" onclick="sendMessage()">Ask</button>
+      </div>
+    <div class="api-bar">
+      <span class="api-bar-label">API Key:</span>
+      <span class="api-bar-key" id="api-bar-key">not set — AI analyst disabled</span>
+      <button class="api-bar-btn" onclick="showModal()">Change</button>
+    </div>
+    </div>
+
+    <footer>
+      <strong>Business applications:</strong> U.S. Census Bureau BFS, county-level 2005–2024, June 2025 release (CBDRB-FY25-0118) ·
+      <strong>Operating millage:</strong> FL DOR Millage &amp; Taxes Levied Report, Nov 2025 extract ·
+      <strong>Sales surtax:</strong> FL EDR 2025 Local Discretionary Sales Surtax Rates ·
+      <strong>Average weekly wages:</strong> BLS QCEW Q3 2025 (preliminary) ·
+      <strong>Friction scores:</strong> pilot estimates — composite of BTR fee, registration steps, processing days, and online availability; methodology adapted from Index of Bureaucracy (Levy-Carciente et al.) ·
+      Adam Smith Center for Economic Freedom, FIU · Pilot Edition 2025
+    </footer>
+  </div>
+</div>
+
+<script>
+// ── DATA ───────────────────────────────────────────────────────────────────
+// BA counts: Census BFS (verified) | Millage: FL DOR Nov 2025 (verified)
+// Surtax: FL EDR 2025 (verified) | Wages: BLS QCEW Q3 2025 (verified)
+// Friction score inputs (BTR/steps/days/online): pilot estimates
+
+const DATA = [
+  { name:"Miami-Dade",   region:"Southeast FL", friction:72.4, btr_fee:75,  steps:7, days:21, online:false, millage:4.5740,  surtax:1.0, wage:1659, ba2005:51885,  ba2010:54878,  ba2015:71789,  ba2019:86066,  ba2020:107266, ba2021:136448, ba2022:128259, ba2023:143437, ba2024:138007, growth_5yr:60.4 },
+  { name:"Broward",      region:"Southeast FL", friction:67.1, btr_fee:45,  steps:6, days:18, online:false, millage:5.6658,  surtax:1.0, wage:1532, ba2005:35785,  ba2010:34521,  ba2015:43539,  ba2019:51700,  ba2020:70164,  ba2021:84378,  ba2022:76848,  ba2023:81998,  ba2024:73408,  growth_5yr:42.0 },
+  { name:"Palm Beach",   region:"Southeast FL", friction:58.3, btr_fee:50,  steps:6, days:15, online:false, millage:4.5000,  surtax:1.0, wage:1710, ba2005:23764,  ba2010:22420,  ba2015:29620,  ba2019:33103,  ba2020:41381,  ba2021:51418,  ba2022:46858,  ba2023:50919,  ba2024:48898,  growth_5yr:47.7 },
+  { name:"Orange",       region:"Central FL",   friction:54.2, btr_fee:55,  steps:6, days:14, online:false, millage:4.4347,  surtax:0.5, wage:1435, ba2005:19207,  ba2010:17479,  ba2015:23373,  ba2019:30617,  ba2020:40235,  ba2021:51581,  ba2022:49098,  ba2023:52873,  ba2024:48168,  growth_5yr:57.3 },
+  { name:"Hillsborough", region:"West FL",      friction:49.7, btr_fee:40,  steps:5, days:12, online:true,  millage:5.4608,  surtax:1.0, wage:1559, ba2005:17202,  ba2010:15436,  ba2015:19884,  ba2019:25255,  ba2020:33563,  ba2021:41797,  ba2022:40659,  ba2023:43283,  ba2024:40816,  growth_5yr:61.6 },
+  { name:"Duval",        region:"Northeast FL", friction:46.3, btr_fee:38,  steps:5, days:11, online:true,  millage:11.0123, surtax:1.0, wage:1503, ba2005:10853,  ba2010:9588,   ba2015:12710,  ba2019:16356,  ba2020:22495,  ba2021:29162,  ba2022:25564,  ba2023:26080,  ba2024:24189,  growth_5yr:47.9 },
+  { name:"Pinellas",     region:"West FL",      friction:36.9, btr_fee:35,  steps:4, days:9,  online:true,  millage:4.5423,  surtax:1.0, wage:1494, ba2005:12409,  ba2010:10561,  ba2015:12456,  ba2019:15545,  ba2020:19243,  ba2021:25102,  ba2022:25900,  ba2023:30826,  ba2024:33396,  growth_5yr:114.8 },
+  { name:"Lee",          region:"Southwest FL", friction:34.1, btr_fee:30,  steps:4, days:8,  online:true,  millage:3.7623,  surtax:0.0, wage:1289, ba2005:9042,   ba2010:7476,   ba2015:8817,   ba2019:10957,  ba2020:13046,  ba2021:17800,  ba2022:18584,  ba2023:21244,  ba2024:20080,  growth_5yr:83.3 },
+  { name:"Polk",         region:"Central FL",   friction:32.8, btr_fee:28,  steps:4, days:8,  online:true,  millage:6.6348,  surtax:1.0, wage:1161, ba2005:6076,   ba2010:4752,   ba2015:5832,   ba2019:8133,   ba2020:11553,  ba2021:16092,  ba2022:15673,  ba2023:16723,  ba2024:15957,  growth_5yr:96.2 },
+  { name:"Brevard",      region:"East FL",      friction:31.4, btr_fee:27,  steps:4, days:7,  online:true,  millage:2.8643,  surtax:1.0, wage:1416, ba2005:6208,   ba2010:4815,   ba2015:5843,   ba2019:6712,   ba2020:8258,   ba2021:10686,  ba2022:10540,  ba2023:11687,  ba2024:11257,  growth_5yr:67.7 },
+  { name:"Volusia",      region:"East FL",      friction:29.7, btr_fee:25,  steps:4, days:7,  online:true,  millage:3.2007,  surtax:0.5, wage:1114, ba2005:6405,   ba2010:4595,   ba2015:5579,   ba2019:6805,   ba2020:8487,   ba2021:10522,  ba2022:10365,  ba2023:11232,  ba2024:10359,  growth_5yr:52.2 },
+  { name:"Sarasota",     region:"Southwest FL", friction:27.3, btr_fee:24,  steps:3, days:6,  online:true,  millage:3.2273,  surtax:1.0, wage:1387, ba2005:6296,   ba2010:4677,   ba2015:5555,   ba2019:6519,   ba2020:7075,   ba2021:9102,   ba2022:9716,   ba2023:10585,  ba2024:10116,  growth_5yr:55.2 },
+  { name:"Collier",      region:"Southwest FL", friction:26.1, btr_fee:26,  steps:3, days:7,  online:true,  millage:3.2203,  surtax:0.0, wage:1430, ba2005:5536,   ba2010:4103,   ba2015:5255,   ba2019:5899,   ba2020:7098,   ba2021:9544,   ba2022:9554,   ba2023:10308,  ba2024:10027,  growth_5yr:70.0 },
+  { name:"Manatee",      region:"West FL",      friction:24.8, btr_fee:22,  steps:3, days:6,  online:true,  millage:6.0326,  surtax:0.5, wage:1293, ba2005:3914,   ba2010:3392,   ba2015:4203,   ba2019:5222,   ba2020:6289,   ba2021:8229,   ba2022:8269,   ba2023:9680,   ba2024:9649,   growth_5yr:84.8 },
+  { name:"St. Johns",    region:"Northeast FL", friction:23.2, btr_fee:20,  steps:3, days:5,  online:true,  millage:5.3603,  surtax:0.0, wage:1269, ba2005:2320,   ba2010:2246,   ba2015:2990,   ba2019:3737,   ba2020:4362,   ba2021:5594,   ba2022:5914,   ba2023:6602,   ba2024:6625,   growth_5yr:77.3 },
+  { name:"Seminole",     region:"Central FL",   friction:22.1, btr_fee:22,  steps:3, days:5,  online:true,  millage:5.3751,  surtax:1.0, wage:1366, ba2005:6994,   ba2010:5789,   ba2015:6414,   ba2019:7428,   ba2020:9393,   ba2021:11426,  ba2022:11219,  ba2023:11552,  ba2024:10616,  growth_5yr:42.9 },
+  { name:"Marion",       region:"North FL",     friction:19.4, btr_fee:18,  steps:3, days:5,  online:true,  millage:4.0200,  surtax:1.5, wage:1105, ba2005:3497,   ba2010:2969,   ba2015:3347,   ba2019:4014,   ba2020:5079,   ba2021:7059,   ba2022:7243,   ba2023:7909,   ba2024:7632,   growth_5yr:90.1 },
+  { name:"Lake",         region:"Central FL",   friction:18.7, btr_fee:18,  steps:3, days:4,  online:true,  millage:5.0254,  surtax:1.0, wage:1079, ba2005:3416,   ba2010:2707,   ba2015:3361,   ba2019:4367,   ba2020:5533,   ba2021:7389,   ba2022:7228,   ba2023:7866,   ba2024:7633,   growth_5yr:74.8 },
+  { name:"Osceola",      region:"Central FL",   friction:17.9, btr_fee:16,  steps:2, days:4,  online:true,  millage:6.9500,  surtax:1.0, wage:1125, ba2005:4172,   ba2010:3537,   ba2015:4688,   ba2019:6514,   ba2020:8910,   ba2021:12132,  ba2022:12260,  ba2023:13613,  ba2024:13301,  growth_5yr:104.2 },
+  { name:"Alachua",      region:"North FL",     friction:15.2, btr_fee:15,  steps:2, days:3,  online:true,  millage:7.6000,  surtax:1.0, wage:1375, ba2005:2318,   ba2010:2042,   ba2015:2401,   ba2019:2836,   ba2020:3625,   ba2021:4832,   ba2022:4646,   ba2023:4856,   ba2024:4500,   growth_5yr:58.7 }
+];
+
+const YEARS = [2005,2010,2015,2019,2020,2021,2022,2023,2024];
+const FL_AVG_WAGE = 1471;
+const WAGE_MIN = 1079, WAGE_MAX = 1710;
+const FRICTION_MED = DATA.reduce((s,d)=>s+d.friction,0)/DATA.length;
+const WAGE_MED = DATA.reduce((s,d)=>s+d.wage,0)/DATA.length;
+
+let selected = DATA[0];
+let sortMode = 'friction';
+let filterText = '';
+
+function frClass(f){ return f>=55?'fr-high':f>=30?'fr-mid':'fr-low'; }
+function frColor(f){ return f>=55?'var(--red)':f>=30?'var(--accent)':'var(--accent2)'; }
+
+function quadrant(d){
+  const hiF = d.friction > FRICTION_MED;
+  const hiW = d.wage > WAGE_MED;
+  if(hiF && hiW)  return {label:'High friction · High wages', note:'Productive but costly to enter', color:'var(--red)'};
+  if(hiF && !hiW) return {label:'High friction · Low wages', note:'Most challenging environment for new businesses', color:'#ff7b00'};
+  if(!hiF && hiW) return {label:'Low friction · High wages', note:'Strong business environment', color:'var(--accent2)'};
+  return {label:'Low friction · Low wages', note:'Easy entry but limited labor market depth', color:'var(--blue)'};
+}
+
+function renderList(){
+  let items = [...DATA].filter(d=>d.name.toLowerCase().includes(filterText.toLowerCase()));
+  if(sortMode==='friction') items.sort((a,b)=>b.friction-a.friction);
+  if(sortMode==='name') items.sort((a,b)=>a.name.localeCompare(b.name));
+  if(sortMode==='growth') items.sort((a,b)=>b.growth_5yr-a.growth_5yr);
+  if(sortMode==='wage') items.sort((a,b)=>b.wage-a.wage);
+  document.getElementById('county-list').innerHTML = items.map(d=>
+    '<div class="county-item '+(d===selected?'active':'')+'" onclick="selectCounty(\''+d.name+'\')">'+
+    '<div><div class="county-name">'+d.name+'</div>'+
+    '<div class="county-meta">$'+d.wage.toLocaleString()+'/wk · +'+d.growth_5yr+'%</div></div>'+
+    '<span class="friction-pill '+frClass(d.friction)+'" title="Estimated friction score">~'+d.friction+'</span></div>'
+  ).join('');
+}
+
+function filterList(){ filterText=document.getElementById('search').value; renderList(); }
+function sortBy(mode){
+  sortMode=mode;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sort-'+mode).classList.add('active');
+  renderList();
+}
+function selectCounty(name){ selected=DATA.find(d=>d.name===name); renderList(); renderMain(); }
+
+function renderMain(){
+  const d = selected;
+  document.getElementById('ctitle').textContent = d.name+' County';
+  document.getElementById('csubtitle').textContent = d.region+' · '+(d.friction>=55?'High':d.friction>=30?'Moderate':'Low')+'-friction regulatory environment';
+
+  const q = quadrant(d);
+  document.getElementById('stats-row').innerHTML =
+    '<div class="stat-card"><div class="stat-label">Friction Score <span class="stat-tag">estimated</span></div>'+
+    '<div class="stat-value" style="color:'+frColor(d.friction)+'">~'+d.friction+'</div>'+
+    '<div class="stat-sub">pilot composite</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Op. Millage <span class="stat-tag stat-tag-green">verified</span></div>'+
+    '<div class="stat-value">'+d.millage.toFixed(2)+'</div>'+
+    '<div class="stat-sub">mills / $1,000 value</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Sales Surtax <span class="stat-tag stat-tag-green">verified</span></div>'+
+    '<div class="stat-value">'+d.surtax.toFixed(1)+'%</div>'+
+    '<div class="stat-sub">discretionary</div></div>'+
+    '<div class="stat-card"><div class="stat-label">Avg Weekly Wage <span class="stat-tag" style="background:#e8f0f8;color:#2563a8">BLS verified</span></div>'+
+    '<div class="stat-value" style="color:#2563a8">$'+d.wage.toLocaleString()+'</div>'+
+    '<div class="stat-sub">Q3 2025, preliminary</div></div>'+
+    '<div class="stat-card"><div class="stat-label">5-yr BA Growth <span class="stat-tag stat-tag-green">verified</span></div>'+
+    '<div class="stat-value" style="color:var(--accent2)">+'+d.growth_5yr+'%</div>'+
+    '<div class="stat-sub">2019→2024 Census</div></div>';
+
+  document.getElementById('reg-details').innerHTML =
+    '<div class="drow"><span>BTR Fee</span><span>$'+d.btr_fee+'/yr</span></div>'+
+    '<div class="drow"><span>Registration Steps</span><span>'+d.steps+' steps</span></div>'+
+    '<div class="drow"><span>Processing Time</span><span>'+d.days+' days</span></div>'+
+    '<div class="drow"><span>Online Application</span><span style="color:'+(d.online?'var(--accent2)':'var(--red)')+'>'+(d.online?'✓ Yes':'✗ In-person')+'</span></div>'+
+    '<div class="drow"><span>2024 Business Apps</span><span>'+d.ba2024.toLocaleString()+'</span></div>'+
+    '<div class="drow"><span>2021 Peak</span><span>'+d.ba2021.toLocaleString()+'</span></div>';
+
+  const top10 = [...DATA].sort((a,b)=>b.friction-a.friction).slice(0,10);
+  const maxF = top10[0].friction;
+  document.getElementById('friction-bars').innerHTML = top10.map(c=>
+    '<div class="bar-row">'+
+    '<div class="bar-label" title="'+c.name+'">'+c.name+'</div>'+
+    '<div class="bar-track"><div class="bar-fill" style="width:'+((c.friction/maxF*100).toFixed(1))+'%;background:'+frColor(c.friction)+'"></div></div>'+
+    '<div class="bar-num" style="color:'+frColor(c.friction)+'">'+c.friction+'</div></div>'
+  ).join('');
+
+  // Wage context card
+  const wagePct = ((d.wage-WAGE_MIN)/(WAGE_MAX-WAGE_MIN)*100).toFixed(1);
+  const wageVsFL = d.wage - FL_AVG_WAGE;
+  document.getElementById('wage-num').textContent = '$'+d.wage.toLocaleString();
+  document.getElementById('wage-sub').textContent = (wageVsFL>=0?'+':'')+'$'+wageVsFL+' vs FL avg ($'+FL_AVG_WAGE.toLocaleString()+')';
+  document.getElementById('wage-bar').style.width = wagePct+'%';
+  document.getElementById('quadrant-label').innerHTML = '<strong style="color:'+q.color+'">'+q.label+'</strong><br>'+q.note;
+
+  // Tax burden card
+  const totalTax = (d.millage + d.surtax*10).toFixed(2);
+  document.getElementById('tax-details').innerHTML =
+    '<div class="drow"><span>Operating Millage</span><span>'+d.millage.toFixed(4)+'</span></div>'+
+    '<div class="drow"><span>Sales Surtax</span><span>'+(d.surtax===0?'<span style="color:var(--accent2)">None</span>':d.surtax.toFixed(1)+'%')+'</span></div>'+
+    '<div class="drow"><span>State Base Sales Tax</span><span>6.0%</span></div>'+
+    '<div class="drow"><span>Total Sales Tax</span><span>'+(6+d.surtax).toFixed(1)+'%</span></div>'+
+    (d.millage===11.0123?'<div class="drow" style="font-size:11px;color:var(--muted)"><span colspan="2">⚠ Duval: consolidated city-county — millage covers city+county functions</span></div>':'');
+
+  // County context card
+  const frRank = [...DATA].sort((a,b)=>b.friction-a.friction).findIndex(x=>x.name===d.name)+1;
+  const wageRank = [...DATA].sort((a,b)=>b.wage-a.wage).findIndex(x=>x.name===d.name)+1;
+  const growthRank = [...DATA].sort((a,b)=>b.growth_5yr-a.growth_5yr).findIndex(x=>x.name===d.name)+1;
+  document.getElementById('county-context').innerHTML =
+    '<div class="drow"><span>Friction Rank</span><span>#'+frRank+' of 20</span></div>'+
+    '<div class="drow"><span>Wage Rank</span><span>#'+wageRank+' of 20</span></div>'+
+    '<div class="drow"><span>Growth Rank</span><span>#'+growthRank+' of 20</span></div>'+
+    '<div class="drow"><span>Surtax vs peers</span><span>'+(d.surtax===0?'<span style="color:var(--accent2)">Below avg</span>':d.surtax===1.5?'<span style="color:var(--red)">Highest</span>':'Average')+'</span></div>'+
+    '<div class="drow"><span>Millage vs peers</span><span>'+(d.millage<4?'<span style="color:var(--accent2)">Low</span>':d.millage>7?'<span style="color:var(--red)">High</span>':'Average')+'</span></div>';
+
+  renderChart();
+  renderChips();
+}
+
+function renderChart(){
+  const canvas = document.getElementById('chart-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const W=canvas.offsetWidth, H=canvas.offsetHeight;
+  const pad={t:18,r:16,b:36,l:58};
+  const d=selected;
+  const vals=[d.ba2005,d.ba2010,d.ba2015,d.ba2019,d.ba2020,d.ba2021,d.ba2022,d.ba2023,d.ba2024];
+  const maxV=Math.max(...vals)*1.1;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=0.5;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+(H-pad.t-pad.b)*i/4;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle='#8b949e'; ctx.font='10px system-ui'; ctx.textAlign='right';
+    const v=maxV*(1-i/4);
+    ctx.fillText(v>=1000?(v/1000).toFixed(0)+'k':v.toFixed(0),pad.l-5,y+3);
+  }
+  YEARS.forEach((yr,i)=>{
+    const x=pad.l+(W-pad.l-pad.r)*i/(YEARS.length-1);
+    ctx.fillStyle='#8b949e'; ctx.font='10px system-ui'; ctx.textAlign='center';
+    ctx.fillText(yr,x,H-pad.b+14);
+    ctx.strokeStyle='#30363d'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,H-pad.b); ctx.stroke();
+  });
+  const cx=pad.l+(W-pad.l-pad.r)*4/(YEARS.length-1);
+  ctx.strokeStyle='#58a6ff44'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(cx,pad.t); ctx.lineTo(cx,H-pad.b); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#58a6ff88'; ctx.font='9px system-ui'; ctx.textAlign='center';
+  ctx.fillText('COVID-19',cx,pad.t+9);
+  ctx.beginPath();
+  vals.forEach((v,i)=>{
+    const x=pad.l+(W-pad.l-pad.r)*i/(YEARS.length-1);
+    const y=pad.t+(H-pad.t-pad.b)*(1-v/maxV);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.lineTo(pad.l+(W-pad.l-pad.r),H-pad.b); ctx.lineTo(pad.l,H-pad.b); ctx.closePath();
+  const g=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
+  g.addColorStop(0,'#f0883e44'); g.addColorStop(1,'#f0883e00');
+  ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath(); ctx.strokeStyle='#f0883e'; ctx.lineWidth=2; ctx.setLineDash([]);
+  vals.forEach((v,i)=>{
+    const x=pad.l+(W-pad.l-pad.r)*i/(YEARS.length-1);
+    const y=pad.t+(H-pad.t-pad.b)*(1-v/maxV);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }); ctx.stroke();
+  vals.forEach((v,i)=>{
+    const x=pad.l+(W-pad.l-pad.r)*i/(YEARS.length-1);
+    const y=pad.t+(H-pad.t-pad.b)*(1-v/maxV);
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle='#f0883e'; ctx.fill();
+    ctx.strokeStyle='#0d1117'; ctx.lineWidth=1.5; ctx.stroke();
+  });
+}
+
+function buildSystem(){
+  const summary = DATA.map(function(d){
+    return d.name+': friction='+d.friction+'(est), millage='+d.millage+'(verified), surtax='+d.surtax+'%(verified), wage=$'+d.wage+'/wk(verified), ba2024='+d.ba2024+'(verified), growth=+'+d.growth_5yr+'%(verified)';
+  }).join('; ');
+  return 'You are a policy research analyst at the Adam Smith Center for Economic Freedom at FIU. You analyze the Florida Bureaucratic Friction Index (FBFI), a pilot tool covering 20 Florida counties. Data sources: (1) Business applications: U.S. Census BFS 2005-2024, verified. (2) Operating millage: FL DOR Nov 2025 extract, verified. (3) Discretionary sales surtax: FL EDR 2025, verified. (4) Average weekly wages: BLS QCEW Q3 2025 preliminary, verified. (5) Friction scores: pilot estimates using BTR fee, registration steps, processing days, online availability - adapted from Index of Bureaucracy (Levy-Carciente et al.) - NOT verified. Wages are contextual only, not part of friction score. Currently viewing: '+selected.name+' (friction~'+selected.friction+', millage='+selected.millage+', surtax='+selected.surtax+'%, wage=$'+selected.wage+'). County data: '+summary+'. Answer in 2-4 sentences. Be specific with numbers. Note when data is estimated vs verified. Surface policy insights and cross-county comparisons.';
+}
+
+function renderChips(){
+  const others = DATA.filter(function(d){ return d!==selected; });
+  const closest = others.reduce(function(a,b){ return Math.abs(a.friction-selected.friction)<Math.abs(b.friction-selected.friction)?a:b; });
+  const lowestTax = DATA.reduce(function(a,b){ return (a.millage+a.surtax*10)<(b.millage+b.surtax*10)?a:b; });
+  const chips = [
+    'Compare '+selected.name+' to '+closest.name,
+    'What explains the friction score?',
+    'How does '+selected.name+' compare on tax burden?',
+    'High friction, high wage — is that a problem?'
+  ];
+  document.getElementById('ai-chips').innerHTML = chips.map(function(c){
+    return '<div class="ai-chip" onclick="askChip(\''+c.replace(/'/g,"\\'")+'\')">' + c + '</div>';
+  }).join('');
+}
+
+function askChip(text){ document.getElementById('ai-input').value=text; sendMessage(); }
+
+async function sendMessage(){
+  const input=document.getElementById('ai-input');
+  const text=input.value.trim();
+  if(!text) return;
+  input.value='';
+  const box=document.getElementById('ai-messages');
+  box.innerHTML+='<div class="msg user">'+text+'</div>';
+  box.innerHTML+='<div class="msg ai loading" id="thinking">Analyzing…</div>';
+  box.scrollTop=box.scrollHeight;
+  if(!ANTHROPIC_KEY){
+    document.getElementById('thinking').remove();
+    box.innerHTML+='<div class="msg ai" style="color:#c0392b;">No API key set. Click <strong>Change</strong> below to add your Anthropic API key.</div>';
+    box.scrollTop=box.scrollHeight;
+    return;
+  }
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:buildSystem(),
+        messages:[{role:'user',content:text}]
+      })
+    });
+    const data=await res.json();
+    const reply=data.content&&data.content[0]?data.content[0].text:'No response.';
+    document.getElementById('thinking').remove();
+    box.innerHTML+='<div class="msg ai">'+reply+'</div>';
+  }catch(e){
+    document.getElementById('thinking').remove();
+    box.innerHTML+='<div class="msg ai" style="color:var(--red)">Connection error.</div>';
+  }
+  box.scrollTop=box.scrollHeight;
+}
+
+renderList();
+renderMain();
+window.addEventListener('resize', renderChart);
+
+// ── API KEY MANAGEMENT ─────────────────────────────────────────────────────
+let ANTHROPIC_KEY = '';
+
+function saveKey(){
+  const val = document.getElementById('modal-key-input').value.trim();
+  if(!val){ alert('Please enter your API key.'); return; }
+  ANTHROPIC_KEY = val;
+  document.getElementById('api-modal').style.display = 'none';
+  updateApiBar();
+}
+
+function skipKey(){
+  document.getElementById('api-modal').style.display = 'none';
+  updateApiBar();
+}
+
+function showModal(){
+  document.getElementById('modal-key-input').value = ANTHROPIC_KEY;
+  document.getElementById('api-modal').style.display = 'flex';
+}
+
+function updateApiBar(){
+  const bar = document.getElementById('api-bar-key');
+  if(ANTHROPIC_KEY){
+    bar.textContent = ANTHROPIC_KEY.slice(0,8)+'••••••••••••'+ANTHROPIC_KEY.slice(-4)+' (active)';
+    bar.style.color = '#2a7a3b';
+  } else {
+    bar.textContent = 'not set — AI analyst disabled';
+    bar.style.color = '#8ba3c7';
+  }
+}
+
+</script>
+</body>
+</html>
